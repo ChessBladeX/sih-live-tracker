@@ -1,10 +1,15 @@
 """Export and formatting utilities for scraped SIH problem statements."""
 
+from __future__ import annotations
+
 import csv
 import json
 from pathlib import Path
-from typing import List
+from typing import List, Union
 from .models import ProblemStatement
+
+# Type alias for path
+Union_Path_or_Str = Union[str, Path]
 
 
 def export_csv(statements: List[ProblemStatement], filepath: Union_Path_or_Str) -> Path:
@@ -123,8 +128,3 @@ def format_terminal_table(statements: List[ProblemStatement], max_title_len: int
         )
 
     return "\n".join(lines)
-
-
-# Type alias for path
-from typing import Union
-Union_Path_or_Str = Union[str, Path]
