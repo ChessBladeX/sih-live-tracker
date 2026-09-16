@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SIH Live Submission Tracker & Problem Statements</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Header -->
+  <header>
+    <div class="brand-section">
+      <div class="brand-icon">⚡</div>
+      <div class="brand-title">
+        <h1>SIH Live Tracker</h1>
+        <p>Real-time submission monitoring & competition analytics</p>
+      </div>
+    </div>
+    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+      <div class="live-indicator-pill" id="livePill">
+        <div class="pulse-dot"></div>
+        <span id="liveStatusText">Live Monitoring Active</span>
+      </div>
+      <button class="btn btn-secondary" id="btnRefresh" title="Force refresh live counts from SIH">
+        🔄 Fetch Live
+      </button>
+      <button class="btn btn-primary" id="btnImportDescriptions" title="Import and save all full descriptions from official SIH website">
+        📥 Import All Descriptions
+      </button>
+    </div>
+  </header>
+
+  <!-- Metric Highlights -->
+  <section class="stats-grid" id="statsGrid">
+    <div class="stat-card">
+      <div class="stat-label">Total Statements</div>
+      <div class="stat-value" id="statTotalPS">-</div>
+      <div class="stat-sub" id="statCategoryBreakdown">Software / Hardware</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total Submissions</div>
+      <div class="stat-value" id="statTotalSubs">-</div>
+      <div class="stat-sub">Live registered ideas</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Average Competition</div>
+      <div class="stat-value" id="statAvgSubs">-</div>
+      <div class="stat-sub">Ideas per statement</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Frozen (At Cap)</div>
+      <div class="stat-value" id="statFrozen">-</div>
+      <div class="stat-sub">Statements at 500/500 cap</div>
+    </div>
+  </section>
+
+  <!-- Control & Filter Bar -->
+  <section class="controls-panel">
+    <!-- Search and Dropdowns Row -->
+    <div class="search-row">
+      <div class="search-input-wrapper">
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="search-input" 
+          placeholder="🔍 Search by keyword, title, description, or ID (e.g. AI, Drone, 26001)..."
+        >
+      </div>
+      <div class="filter-group">
+        <select id="categoryFilter" class="filter-select">
+          <option value="">All Categories</option>
+          <option value="Software">Software</option>
+          <option value="Hardware">Hardware</option>
+        </select>
+        
+        <!-- Multi-Select Theme Dropdown Component -->
+        <div class="theme-multiselect-container" id="themeMultiContainer">
+          <button type="button" class="theme-multiselect-trigger" id="themeTrigger" aria-expanded="false" aria-haspopup="true">
+            <span class="theme-trigger-content">
+              <span class="theme-icon">🏷️</span>
+              <span class="theme-trigger-label" id="themeTriggerLabel">All Themes / Domains</span>
+            </span>
+            <span class="theme-trigger-badges">
+              <span class="theme-count-pill" id="themeSelectedPill" style="display: none;">0</span>
+              <button type="button" class="theme-clear-btn" id="btnClearThemesInline" title="Clear all selected themes" style="display: none;">✕</button>
+              <span class="theme-chevron" id="themeChevron">▾</span>
+            </span>
+          </button>
+
+          <!-- Dropdown Popover Menu -->
+          <div class="theme-dropdown-menu" id="themeDropdownMenu">
+            <div class="theme-menu-header">
+              <div class="theme-search-box">
+                <input 
+                  type="text" 
+                  id="themeSearchInput" 
+                  class="theme-search-input" 
+                  placeholder="🔍 Search themes..." 
+                  autocomplete="off"
+                >
+              </div>
+              <div class="theme-quick-actions">
+                <button type="button" class="theme-action-btn" id="btnSelectAllThemes">Select All</button>
+                <button type="button" class="theme-action-btn" id="btnClearAllThemes">Clear</button>
+              </div>
+            </div>
+
+            <!-- Theme Checkboxes List -->
+            <div class="theme-options-list" id="themeOptionsList">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Footer summary -->
+            <div class="theme-menu-footer">
+              <span id="themeSelectionSummary">0 selected</span>
+              <button type="button" class="btn btn-primary btn-sm" id="btnApplyThemes" style="padding: 4px 12px; font-size: 0.78rem;">Done</button>
+            </div>
+          </div>
+        </div>
+
+        <select id="sortFilter" class="filter-select">
+          <option value="id">Sort: Default ID</option>
+          <option value="sub-asc">Submissions: Lowest First (Best Odds)</option>
+          <option value="sub-desc">Submissions: Highest First</option>
+          <option value="pct-desc">Capacity: Most Filled First</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Active Theme Filter Chips Bar -->
+    <div class="active-themes-bar" id="activeThemesBar" style="display: none;">
+      <span class="active-themes-label">🏷️ Filtered Themes:</span>
+      <div class="active-themes-chips" id="activeThemesChips"></div>
+      <button type="button" class="active-themes-clear-all" id="btnClearAllThemesChip">Clear All Themes</button>
+    </div>
+
+    <!-- NEW: Submission Range Filter Row (15-59) -->
+    <div class="range-filter-wrapper">
+      <div class="range-label">🎯 Submissions Range:</div>
+      <div class="range-inputs">
+        <input type="number" id="rangeMin" class="range-input" placeholder="Min (15)" min="0" max="500">
+        <span style="color: var(--text-dim); font-size: 0.85rem;">to</span>
+        <input type="number" id="rangeMax" class="range-input" placeholder="Max (59)" min="0" max="500">
+        <button class="btn btn-primary btn-sm" id="btnApplyRange">Search Range</button>
+        <button class="btn btn-secondary btn-sm" id="btnResetRange">Clear</button>
+      </div>
+      <div class="range-presets">
+        <span style="font-size: 0.76rem; color: var(--text-dim); margin-left: 6px;">Presets:</span>
+        <span class="preset-pill" onclick="applyPreset(15, 59)">15 - 59</span>
+        <span class="preset-pill" onclick="applyPreset(0, 15)">&lt; 15 (Lowest)</span>
+        <span class="preset-pill" onclick="applyPreset(20, 50)">20 - 50</span>
+        <span class="preset-pill" onclick="applyPreset(50, 100)">50 - 100</span>
+        <span class="preset-pill" onclick="applyPreset(100, 500)">100+</span>
+      </div>
+    </div>
+
+    <!-- Quick Selected PS Bar -->
+    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+      <span style="font-size: 0.85rem; color: var(--text-muted);">Quick Add PS ID to Track:</span>
+      <input 
+        type="text" 
+        id="quickAddInput" 
+        placeholder="e.g. SIH26001, SIH26005" 
+        style="padding: 6px 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; font-size: 0.85rem;"
+      >
+      <button class="btn btn-secondary" id="btnAddWatch" style="padding: 6px 12px; font-size: 0.8rem;">+ Add to Watchlist</button>
+      <button class="btn btn-primary" id="btnFilterWatchlist" style="padding: 6px 12px; font-size: 0.8rem;">Filter Watchlist Only</button>
+      <button class="btn btn-secondary" id="btnClearWatchlist" style="padding: 6px 12px; font-size: 0.8rem;">Clear Watchlist</button>
+    </div>
+
+    <div class="action-row">
+      <div style="font-size: 0.88rem; color: var(--text-muted);" id="resultCount">
+        Showing 0 problem statement(s)
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-secondary" id="btnExportCSV">📥 Export CSV</button>
+        <button class="btn btn-secondary" id="btnExportJSON">📥 Export JSON</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Active Watchlist Banner -->
+  <div class="watchlist-bar" id="watchlistBar" style="display: none;">
+    <div style="font-size: 0.85rem; font-weight: 600;">📌 Your Watchlist:</div>
+    <div class="watchlist-tags" id="watchlistTags"></div>
+  </div>
+
+  <!-- Cards Grid -->
+  <main class="statements-grid" id="cardsGrid">
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
+      Loading live problem statements from SIH portal...
+    </div>
+  </main>
+</div>
+
+<!-- Modal for Full Statement Details -->
+<div class="modal-overlay" id="detailModal">
+  <div class="modal-box">
+    <button class="modal-close" id="modalClose">&times;</button>
+    <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap;">
+      <span class="ps-id-badge" id="mId"></span>
+      <span class="category-tag cat-software" id="mCat"></span>
+      <button id="mWatchlistBtn" class="btn-watchlist-card" style="margin-left: auto;">+ Add to Watchlist</button>
+    </div>
+    <h2 id="mTitle" style="font-size: 1.35rem; margin-bottom: 12px; line-height: 1.4;"></h2>
+    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 16px;">
+      <strong>Organization:</strong> <span id="mOrg"></span> | <strong>Department:</strong> <span id="mDept"></span>
+    </div>
+
+    <div class="submission-meter" style="margin-bottom: 20px;">
+      <div class="meter-header">
+        <div class="meter-count" id="mMeterCount">0 <span>/ 500 ideas</span></div>
+        <div class="meter-status" id="mMeterStatus"></div>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill fill-low" id="mProgressBar" style="width: 0%;"></div>
+      </div>
+      <div class="meter-footer">
+        <span id="mSlotsLeft">500 slots left</span>
+        <span id="mDeadline"></span>
+      </div>
+    </div>
+
+    <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--primary-light);">Full Problem Statement Description:</h4>
+    <div class="modal-desc-box" id="mDesc">No description available.</div>
+
+    <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;" id="mLinks"></div>
+  </div>
+</div>
+
+<script>
+  let allStatements = [];
+  let displayedStatements = [];
+  let watchlist = JSON.parse(localStorage.getItem('sih_watchlist') || '[]');
+  let autoRefreshInterval = null;
+
+  // Multi-theme selection state
+  let selectedThemes = new Set();
+  let availableThemes = [];
+  let themeCounts = {};
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+
+  function escapeJs(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/\\/g, "\\\\")
+      .replace(/'/g, "\\'")
+      .replace(/"/g, '\\"');
+  }
+
+  async function fetchSummary() {
+    try {
+      const res = await fetch('/api/summary');
+      const data = await res.json();
+      document.getElementById('statTotalPS').textContent = data.total_problem_statements || '-';
+      document.getElementById('statTotalSubs').textContent = (data.total_live_submissions || 0).toLocaleString();
+      document.getElementById('statAvgSubs').textContent = data.average_submissions || '-';
+      document.getElementById('statFrozen').textContent = data.frozen_statements_count || '0';
+      document.getElementById('statCategoryBreakdown').textContent = 
+        `${data.software_count || 0} Software • ${data.hardware_count || 0} Hardware`;
+    } catch (e) {
+      console.error('Error fetching summary:', e);
+    }
+  }
+
+  async function fetchThemes() {
+    try {
+      const res = await fetch('/api/categories-and-themes');
+      const data = await res.json();
+      availableThemes = data.themes || [];
+      themeCounts = data.theme_counts || {};
+      renderThemeOptions();
+      updateThemeTriggerLabel();
+    } catch (e) {
+      console.error('Error fetching themes:', e);
+    }
+  }
+
+  function renderThemeOptions(filterText = '') {
+    const list = document.getElementById('themeOptionsList');
+    const filter = filterText.toLowerCase().trim();
+    const filtered = availableThemes.filter(t => !filter || t.toLowerCase().includes(filter));
+
+    if (!filtered.length) {
+      list.innerHTML = `<div class="theme-empty">No themes match "${escapeHtml(filterText)}"</div>`;
+      return;
+    }
+
+    list.innerHTML = filtered.map((theme, idx) => {
+      const isChecked = selectedThemes.has(theme);
+      const count = themeCounts[theme] !== undefined ? themeCounts[theme] : '';
+      const safeId = `chk_theme_${idx}`;
+      return `
+        <label class="theme-option-row ${isChecked ? 'selected' : ''}" for="${safeId}">
+          <input 
+            type="checkbox" 
+            id="${safeId}" 
+            class="theme-checkbox" 
+            value="${escapeHtml(theme)}" 
+            ${isChecked ? 'checked' : ''}
+            onchange="toggleThemeSelection('${escapeJs(theme)}', this.checked)"
+          >
+          <span class="theme-custom-check"></span>
+          <span class="theme-option-name" title="${escapeHtml(theme)}">${escapeHtml(theme)}</span>
+          ${count !== '' ? `<span class="theme-option-count">${count}</span>` : ''}
+        </label>
+      `;
+    }).join('');
+  }
+
+  window.toggleThemeSelection = function(theme, isChecked) {
+    if (isChecked) {
+      selectedThemes.add(theme);
+    } else {
+      selectedThemes.delete(theme);
+    }
+    onThemesChanged();
+  };
+
+  function onThemesChanged() {
+    updateThemeTriggerLabel();
+    renderActiveThemeChips();
+    // Synchronize checkboxes in current view
+    const rows = document.querySelectorAll('.theme-option-row');
+    rows.forEach(row => {
+      const cb = row.querySelector('.theme-checkbox');
+      if (cb) {
+        const checked = selectedThemes.has(cb.value);
+        cb.checked = checked;
+        row.classList.toggle('selected', checked);
+      }
+    });
+    document.getElementById('themeSelectionSummary').textContent = 
+      `${selectedThemes.size} of ${availableThemes.length} selected`;
+    fetchStatements();
+  }
+
+  function updateThemeTriggerLabel() {
+    const label = document.getElementById('themeTriggerLabel');
+    const pill = document.getElementById('themeSelectedPill');
+    const clearBtn = document.getElementById('btnClearThemesInline');
+
+    if (selectedThemes.size === 0) {
+      label.textContent = availableThemes.length > 0 ? `All Themes / Domains (${availableThemes.length})` : 'All Themes / Domains';
+      pill.style.display = 'none';
+      clearBtn.style.display = 'none';
+    } else if (selectedThemes.size === 1) {
+      const single = Array.from(selectedThemes)[0];
+      label.textContent = single;
+      pill.textContent = '1';
+      pill.style.display = 'inline-flex';
+      clearBtn.style.display = 'inline-flex';
+    } else {
+      label.textContent = `${selectedThemes.size} Themes Selected`;
+      pill.textContent = String(selectedThemes.size);
+      pill.style.display = 'inline-flex';
+      clearBtn.style.display = 'inline-flex';
+    }
+  }
+
+  function renderActiveThemeChips() {
+    const bar = document.getElementById('activeThemesBar');
+    const chips = document.getElementById('activeThemesChips');
+    if (!selectedThemes.size) {
+      bar.style.display = 'none';
+      chips.innerHTML = '';
+      return;
+    }
+    bar.style.display = 'flex';
+    chips.innerHTML = Array.from(selectedThemes).map(theme => `
+      <span class="active-theme-chip" title="${escapeHtml(theme)}">
+        <span class="chip-dot"></span>
+        <span class="chip-text">${escapeHtml(theme)}</span>
+        <span class="chip-remove" onclick="removeThemeChip('${escapeJs(theme)}')">&times;</span>
+      </span>
+    `).join('');
+  }
+
+  window.removeThemeChip = function(theme) {
+    selectedThemes.delete(theme);
+    onThemesChanged();
+  };
+
+  function clearAllThemes() {
+    selectedThemes.clear();
+    onThemesChanged();
+  }
+
+  async function fetchStatements(forceRefresh = false) {
+    const grid = document.getElementById('cardsGrid');
+    if (forceRefresh) {
+      document.getElementById('liveStatusText').textContent = 'Refreshing Live...';
+    }
+
+    try {
+      const cat = document.getElementById('categoryFilter').value;
+      const kw = document.getElementById('searchInput').value;
+      const sort = document.getElementById('sortFilter').value;
+      const minSub = document.getElementById('rangeMin').value;
+      const maxSub = document.getElementById('rangeMax').value;
+
+      const url = new URL('/api/statements', window.location.origin);
+      if (cat) url.searchParams.set('category', cat);
+      if (selectedThemes.size > 0) {
+        selectedThemes.forEach(t => url.searchParams.append('theme', t));
+      }
+      if (kw) url.searchParams.set('keyword', kw);
+      if (sort) url.searchParams.set('sort_by', sort);
+      if (minSub !== '') url.searchParams.set('min_submissions', minSub);
+      if (maxSub !== '') url.searchParams.set('max_submissions', maxSub);
+      if (forceRefresh) url.searchParams.set('refresh', 'true');
+
+      const res = await fetch(url);
+      const data = await res.json();
+      allStatements = data.data || [];
+      renderCards(allStatements);
+      document.getElementById('liveStatusText').textContent = 'Live Monitoring Active';
+    } catch (e) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 40px;">
+        Failed to fetch live data: ${e.message}
+      </div>`;
+      document.getElementById('liveStatusText').textContent = 'Sync Paused';
+    }
+  }
+
+  function getFillClass(pct) {
+    if (pct >= 80) return 'fill-critical';
+    if (pct >= 50) return 'fill-high';
+    if (pct >= 20) return 'fill-moderate';
+    return 'fill-low';
+  }
+
+  function formatDescriptionHtml(desc) {
+    if (!desc) return 'No description provided.';
+    let clean = desc
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    // Format bold headers
+    clean = clean.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #c7d2fe; display: block; margin-top: 10px; font-size: 0.92rem;">$1</strong>');
+    return clean;
+  }
+
+  function renderCards(statements) {
+    displayedStatements = statements;
+    const grid = document.getElementById('cardsGrid');
+    
+    // Update count text with range info if applied
+    const minSub = document.getElementById('rangeMin').value;
+    const maxSub = document.getElementById('rangeMax').value;
+    let rangeText = '';
+    if (minSub !== '' && maxSub !== '') {
+      rangeText = ` with ${minSub}-${maxSub} submissions`;
+    } else if (minSub !== '') {
+      rangeText = ` with ≥${minSub} submissions`;
+    } else if (maxSub !== '') {
+      rangeText = ` with ≤${maxSub} submissions`;
+    }
+
+    let themeText = '';
+    if (selectedThemes.size === 1) {
+      themeText = ` in "${Array.from(selectedThemes)[0]}"`;
+    } else if (selectedThemes.size > 1) {
+      themeText = ` across ${selectedThemes.size} themes`;
+    }
+
+    document.getElementById('resultCount').textContent = `Showing ${statements.length} problem statement(s)${rangeText}${themeText}`;
+
+    if (!statements.length) {
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">
+        No problem statements match your current search/filters. Try clearing the range or keyword.
+      </div>`;
+      return;
+    }
+
+    grid.innerHTML = statements.map(ps => {
+      const isWatched = watchlist.includes(ps.id);
+      const fillClass = getFillClass(ps.percentage_filled);
+      const catClass = ps.category.toLowerCase() === 'hardware' ? 'cat-hardware' : 'cat-software';
+      const descSnippet = ps.description ? ps.description.slice(0, 160).replace(/\*\*/g, '') + '...' : 'No description available.';
+
+      return `
+        <div class="statement-card" data-id="${ps.id}">
+          <div>
+            <!-- Card Top with Badges and ADD TO WATCHLIST button -->
+            <div class="card-top">
+              <div style="display: flex; gap: 8px; align-items: center;">
+                <span class="ps-id-badge">${ps.id}</span>
+                <span class="category-tag ${catClass}">${ps.category}</span>
+              </div>
+              <button 
+                class="btn-watchlist-card ${isWatched ? 'in-watchlist' : ''}" 
+                onclick="toggleWatch('${ps.id}')"
+                title="${isWatched ? 'Click to remove from watchlist' : 'Click to add to watchlist'}"
+              >
+                ${isWatched ? '✓ In Watchlist' : '+ Add to Watchlist'}
+              </button>
+            </div>
+
+            <h3 class="card-title" title="${ps.title}">${ps.title}</h3>
+            <div class="card-org">🏢 ${ps.organization || 'Government Organization'}</div>
+
+            <!-- Live Submissions Gauge -->
+            <div class="submission-meter">
+              <div class="meter-header">
+                <div class="meter-count">${ps.submitted_count} <span>/ ${ps.capacity} ideas</span></div>
+                <div class="meter-status" style="color: ${ps.percentage_filled >= 80 ? 'var(--danger)' : 'var(--text-muted)'}">
+                  ${ps.status}
+                </div>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill ${fillClass}" style="width: ${Math.min(100, ps.percentage_filled)}%;"></div>
+              </div>
+              <div class="meter-footer">
+                <span>${ps.percentage_filled.toFixed(1)}% full</span>
+                <span>${ps.slots_remaining} slots left</span>
+              </div>
+            </div>
+
+            <!-- In-Card Problem Description Drawer -->
+            <div class="card-desc-container">
+              <div class="card-desc-preview" id="descPrev-${ps.id}">
+                ${descSnippet}
+              </div>
+              <div class="card-desc-full" id="descFull-${ps.id}">
+                ${formatDescriptionHtml(ps.description)}
+              </div>
+              <button class="desc-toggle-btn" onclick="toggleCardDesc('${ps.id}')">
+                <span id="descToggleIcon-${ps.id}">📖 View Full Description ▾</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <span class="theme-pill" title="${ps.theme}">🏷️ ${ps.theme || 'General'}</span>
+            <button class="view-btn" onclick="openDetails('${ps.id}')">Full Modal Details</button>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  window.toggleCardDesc = function(id) {
+    const fullEl = document.getElementById(`descFull-${id}`);
+    const prevEl = document.getElementById(`descPrev-${id}`);
+    const iconEl = document.getElementById(`descToggleIcon-${id}`);
+    if (!fullEl) return;
+
+    if (fullEl.classList.contains('open')) {
+      fullEl.classList.remove('open');
+      prevEl.style.display = 'block';
+      iconEl.textContent = '📖 View Full Description ▾';
+    } else {
+      fullEl.classList.add('open');
+      prevEl.style.display = 'none';
+      iconEl.textContent = '▴ Collapse Description';
+    }
+  };
+
+  function renderWatchlistBar() {
+    const bar = document.getElementById('watchlistBar');
+    const tags = document.getElementById('watchlistTags');
+    if (!watchlist.length) {
+      bar.style.display = 'none';
+      return;
+    }
+    bar.style.display = 'flex';
+    tags.innerHTML = watchlist.map(id => `
+      <span class="ps-chip">
+        ${id}
+        <span class="chip-remove" onclick="toggleWatch('${id}')">&times;</span>
+      </span>
+    `).join('');
+  }
+
+  window.toggleWatch = function(id) {
+    if (watchlist.includes(id)) {
+      watchlist = watchlist.filter(x => x !== id);
+    } else {
+      watchlist.push(id);
+    }
+    localStorage.setItem('sih_watchlist', JSON.stringify(watchlist));
+    renderWatchlistBar();
+    renderCards(displayedStatements);
+    
+    // Update modal button if currently viewing
+    const modalBtn = document.getElementById('mWatchlistBtn');
+    if (modalBtn && document.getElementById('mId').textContent === id) {
+      const watched = watchlist.includes(id);
+      modalBtn.className = `btn-watchlist-card ${watched ? 'in-watchlist' : ''}`;
+      modalBtn.textContent = watched ? '✓ In Watchlist' : '+ Add to Watchlist';
+    }
+  };
+
+  window.openDetails = function(id) {
+    const ps = allStatements.find(x => x.id === id);
+    if (!ps) return;
+
+    document.getElementById('mId').textContent = ps.id;
+    document.getElementById('mCat').textContent = ps.category;
+    document.getElementById('mTitle').textContent = ps.title;
+    document.getElementById('mOrg').textContent = ps.organization;
+    document.getElementById('mDept').textContent = ps.department || ps.organization;
+    document.getElementById('mMeterCount').innerHTML = `${ps.submitted_count} <span>/ ${ps.capacity} ideas</span>`;
+    document.getElementById('mMeterStatus').textContent = ps.status;
+    document.getElementById('mProgressBar').className = `progress-fill ${getFillClass(ps.percentage_filled)}`;
+    document.getElementById('mProgressBar').style.width = `${Math.min(100, ps.percentage_filled)}%`;
+    document.getElementById('mSlotsLeft').textContent = `${ps.slots_remaining} slots remaining (${ps.percentage_filled.toFixed(1)}% filled)`;
+    document.getElementById('mDeadline').textContent = `Deadline: ${ps.deadline}`;
+    document.getElementById('mDesc').innerHTML = formatDescriptionHtml(ps.description);
+
+    const watched = watchlist.includes(ps.id);
+    const modalBtn = document.getElementById('mWatchlistBtn');
+    modalBtn.className = `btn-watchlist-card ${watched ? 'in-watchlist' : ''}`;
+    modalBtn.textContent = watched ? '✓ In Watchlist' : '+ Add to Watchlist';
+    modalBtn.onclick = () => toggleWatch(ps.id);
+
+    const linksBox = document.getElementById('mLinks');
+    linksBox.innerHTML = '';
+    if (ps.youtube_link && ps.youtube_link.trim()) {
+      linksBox.innerHTML += `<a href="${ps.youtube_link}" target="_blank" class="btn btn-secondary">▶ YouTube Video</a>`;
+    }
+    if (ps.dataset_link && ps.dataset_link.trim()) {
+      linksBox.innerHTML += `<a href="${ps.dataset_link}" target="_blank" class="btn btn-secondary">📁 Dataset Link</a>`;
+    }
+
+    document.getElementById('detailModal').classList.add('active');
+  };
+
+  document.getElementById('modalClose').addEventListener('click', () => {
+    document.getElementById('detailModal').classList.remove('active');
+  });
+
+  document.getElementById('detailModal').addEventListener('click', (e) => {
+    if (e.target.id === 'detailModal') {
+      document.getElementById('detailModal').classList.remove('active');
+    }
+  });
+
+  // Range Presets Helper
+  window.applyPreset = function(min, max) {
+    document.getElementById('rangeMin').value = min !== null ? min : '';
+    document.getElementById('rangeMax').value = max !== null ? max : '';
+    fetchStatements();
+  };
+
+  document.getElementById('btnApplyRange').addEventListener('click', () => {
+    fetchStatements();
+  });
+
+  document.getElementById('btnResetRange').addEventListener('click', () => {
+    document.getElementById('rangeMin').value = '';
+    document.getElementById('rangeMax').value = '';
+    fetchStatements();
+  });
+
+  // Allow pressing Enter in range input fields
+  document.getElementById('rangeMin').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') fetchStatements();
+  });
+  document.getElementById('rangeMax').addEventListener('keyup', (e) => {
+    if (e.key === 'Enter') fetchStatements();
+  });
+
+  // Search input debounce
+  let searchTimer;
+  document.getElementById('searchInput').addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => fetchStatements(), 250);
+  });
+
+  document.getElementById('categoryFilter').addEventListener('change', () => fetchStatements());
+  document.getElementById('sortFilter').addEventListener('change', () => fetchStatements());
+
+  // Multi-Select Theme Dropdown events
+  const themeTrigger = document.getElementById('themeTrigger');
+  const themeDropdownMenu = document.getElementById('themeDropdownMenu');
+  const themeChevron = document.getElementById('themeChevron');
+  const themeSearchInput = document.getElementById('themeSearchInput');
+
+  function toggleThemeDropdown(open) {
+    const shouldOpen = open !== undefined ? open : !themeDropdownMenu.classList.contains('show');
+    if (shouldOpen) {
+      themeDropdownMenu.classList.add('show');
+      themeTrigger.classList.add('active');
+      themeTrigger.setAttribute('aria-expanded', 'true');
+      themeChevron.classList.add('open');
+      setTimeout(() => themeSearchInput.focus(), 50);
+    } else {
+      themeDropdownMenu.classList.remove('show');
+      themeTrigger.classList.remove('active');
+      themeTrigger.setAttribute('aria-expanded', 'false');
+      themeChevron.classList.remove('open');
+    }
+  }
+
+  themeTrigger.addEventListener('click', (e) => {
+    if (e.target.id === 'btnClearThemesInline') return;
+    toggleThemeDropdown();
+  });
+
+  document.getElementById('btnClearThemesInline').addEventListener('click', (e) => {
+    e.stopPropagation();
+    clearAllThemes();
+  });
+
+  document.getElementById('btnClearAllThemesChip').addEventListener('click', () => {
+    clearAllThemes();
+  });
+
+  document.getElementById('btnApplyThemes').addEventListener('click', () => {
+    toggleThemeDropdown(false);
+  });
+
+  themeSearchInput.addEventListener('input', (e) => {
+    renderThemeOptions(e.target.value);
+  });
+
+  document.getElementById('btnSelectAllThemes').addEventListener('click', () => {
+    const filter = themeSearchInput.value.toLowerCase().trim();
+    const targets = availableThemes.filter(t => !filter || t.toLowerCase().includes(filter));
+    targets.forEach(t => selectedThemes.add(t));
+    onThemesChanged();
+  });
+
+  document.getElementById('btnClearAllThemes').addEventListener('click', () => {
+    clearAllThemes();
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    const container = document.getElementById('themeMultiContainer');
+    if (container && !container.contains(e.target)) {
+      toggleThemeDropdown(false);
+    }
+  });
+
+  // Close dropdown on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      toggleThemeDropdown(false);
+    }
+  });
+  document.getElementById('btnRefresh').addEventListener('click', () => {
+    fetchSummary();
+    fetchStatements(true);
+  });
+
+  // Import All Descriptions Button
+  document.getElementById('btnImportDescriptions').addEventListener('click', async () => {
+    const btn = document.getElementById('btnImportDescriptions');
+    const originalText = btn.textContent;
+    btn.textContent = '⏳ Importing from SIH...';
+    btn.disabled = true;
+
+    try {
+      const res = await fetch('/api/import-all-descriptions', { method: 'POST' });
+      const data = await res.json();
+      alert(`✅ ${data.message}\n\nAll Markdown files saved to: ${data.directory}`);
+      // Also download full JSON export with all descriptions
+      const blob = new Blob([JSON.stringify(allStatements, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `sih_all_descriptions_complete.json`;
+      a.click();
+    } catch (e) {
+      alert('Error importing descriptions: ' + e.message);
+    } finally {
+      btn.textContent = originalText;
+      btn.disabled = false;
+    }
+  });
+
+  // Watchlist buttons
+  document.getElementById('btnAddWatch').addEventListener('click', () => {
+    const input = document.getElementById('quickAddInput').value.trim();
+    if (!input) return;
+    const ids = input.split(',').map(s => s.trim().toUpperCase());
+    ids.forEach(id => {
+      const formatted = id.startsWith('SIH') ? id : 'SIH' + id;
+      if (!watchlist.includes(formatted)) watchlist.push(formatted);
+    });
+    localStorage.setItem('sih_watchlist', JSON.stringify(watchlist));
+    document.getElementById('quickAddInput').value = '';
+    renderWatchlistBar();
+    renderCards(displayedStatements);
+  });
+
+  document.getElementById('btnFilterWatchlist').addEventListener('click', () => {
+    if (!watchlist.length) {
+      alert('Your watchlist is empty! Add problem statements first.');
+      return;
+    }
+    const filtered = allStatements.filter(s => watchlist.includes(s.id));
+    renderCards(filtered);
+  });
+
+  document.getElementById('btnClearWatchlist').addEventListener('click', () => {
+    watchlist = [];
+    localStorage.removeItem('sih_watchlist');
+    renderWatchlistBar();
+    renderCards(displayedStatements);
+  });
+
+  // Export handlers
+  document.getElementById('btnExportCSV').addEventListener('click', () => {
+    if (!displayedStatements.length) return;
+    const headers = ["id", "title", "category", "theme", "organization", "submitted_count", "capacity", "percentage_filled", "deadline", "description"];
+    const csvRows = [headers.join(',')];
+    displayedStatements.forEach(s => {
+      const row = [
+        `"${s.id}"`,
+        `"${(s.title || '').replace(/"/g, '""')}"`,
+        `"${s.category}"`,
+        `"${s.theme}"`,
+        `"${(s.organization || '').replace(/"/g, '""')}"`,
+        s.submitted_count,
+        s.capacity,
+        s.percentage_filled,
+        `"${s.deadline}"`,
+        `"${(s.description || '').replace(/"/g, '""')}"`
+      ];
+      csvRows.push(row.join(','));
+    });
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sih_problem_statements_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+  });
+
+  document.getElementById('btnExportJSON').addEventListener('click', () => {
+    if (!displayedStatements.length) return;
+    const blob = new Blob([JSON.stringify(displayedStatements, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sih_problem_statements_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+  });
+
+  // Auto-refresh every 30 seconds
+  function setupAutoRefresh() {
+    autoRefreshInterval = setInterval(() => {
+      fetchSummary();
+      fetchStatements(true);
+    }, 30000);
+  }
+
+  // Init
+  fetchSummary();
+  fetchThemes();
+  fetchStatements();
+  renderWatchlistBar();
+  setupAutoRefresh();
+</script>
+</body>
+</html>

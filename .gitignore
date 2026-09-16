@@ -1,0 +1,14 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+descriptions/
+test_*.csv
+test_*.json
+tests/_tmp_test/
+.git/
+.DS_Store
