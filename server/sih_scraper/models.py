@@ -75,3 +75,15 @@ class ProblemStatement:
             "Organization": self.organization,
             "Deadline": self.deadline,
         }
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "ProblemStatement":
+        """Create ProblemStatement from dictionary, safely filtering computed fields."""
+        valid_fields = {
+            "id", "numeric_id", "sno", "title", "organization",
+            "department", "category", "theme", "submitted_count",
+            "capacity", "deadline", "description", "youtube_link",
+            "dataset_link", "contact_info"
+        }
+        kwargs = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**kwargs)

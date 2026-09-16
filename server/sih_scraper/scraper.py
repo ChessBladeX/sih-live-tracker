@@ -82,8 +82,8 @@ class SIHScraper:
         self.headers = headers or DEFAULT_HEADERS
         self.timeout = timeout
         self.cache_ttl = cache_ttl
-        self._cached_records: List[ProblemStatement] = []
-        self._last_fetch_time: float = 0.0
+        self._cached_records: List[ProblemStatement] = self.load_local_data()
+        self._last_fetch_time: float = time.time() if self._cached_records else 0.0
 
     def fetch_html(self) -> str:
         """Fetch raw HTML from portal with automatic retries."""
@@ -306,6 +306,28 @@ class SIHScraper:
                 continue
         return records
 
+    def load_local_data(self) -> List[ProblemStatement]:
+        """Load records from pre-compiled JSON cache or local descriptions/ directory."""
+        from pathlib import Path
+        import json
+
+        base = Path(__file__).resolve().parent.parent
+        possible_json_paths = [
+            base / "data" / "cached_statements.json",
+            base.parent / "server" / "data" / "cached_statements.json",
+        ]
+        for jp in possible_json_paths:
+            if jp.exists():
+                try:
+                    data = json.loads(jp.read_text(encoding="utf-8"))
+                    records = [ProblemStatement.from_dict(d) for d in data]
+                    if records:
+                        return records
+                except Exception as e:
+                    logger.debug("Failed loading JSON cache %s: %s", jp, e)
+
+        return self.load_from_descriptions_dir()
+
     def fetch_all(self, force_refresh: bool = False) -> List[ProblemStatement]:
         """Fetch all problem statements, utilizing cache unless forced."""
         now = time.time()
@@ -314,16 +336,18 @@ class SIHScraper:
 
         try:
             html = self.fetch_html()
-            self._cached_records = self.parse_html(html)
-            self._last_fetch_time = now
+            parsed = self.parse_html(html)
+            if parsed:
+                self._cached_records = parsed
+                self._last_fetch_time = now
             return self._cached_records
         except Exception as e:
             if self._cached_records:
-                logger.warning("Portal fetch failed (%s); returning cached records", e)
+                logger.warning("SIH portal fetch error (%s); serving cached statements", e)
                 return self._cached_records
-            fallback = self.load_from_descriptions_dir()
+            fallback = self.load_local_data()
             if fallback:
-                logger.info("Loaded %d records from local descriptions directory as offline fallback", len(fallback))
+                logger.info("Loaded %d records from offline data store", len(fallback))
                 self._cached_records = fallback
                 self._last_fetch_time = now
                 return self._cached_records

@@ -6,7 +6,6 @@ __pycache__/
 env/
 venv/
 .venv/
-descriptions/
 test_*.csv
 test_*.json
 tests/_tmp_test/
