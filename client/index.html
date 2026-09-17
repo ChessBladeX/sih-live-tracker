@@ -412,9 +412,11 @@
     return clean;
   }
 
-  async function fetchSummary() {
+  async function fetchSummary(forceRefresh = false) {
     try {
-      const res = await fetch('/api/summary');
+      const url = new URL('/api/summary', window.location.origin);
+      if (forceRefresh) url.searchParams.set('refresh', 'true');
+      const res = await fetch(url);
       const data = await res.json();
       document.getElementById('statTotalPS').textContent = data.total_problem_statements || '-';
       document.getElementById('statTotalSubs').textContent = (data.total_live_submissions || 0).toLocaleString();
@@ -592,6 +594,9 @@
 
       renderView(filteredList);
       document.getElementById('liveStatusText').textContent = 'Live Sync Active';
+      if (forceRefresh) {
+        showToast('Synced live counts from SIH portal!', '✅');
+      }
     } catch (e) {
       grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--accent-rose); padding: 40px;">
         Failed to fetch live data: ${e.message}

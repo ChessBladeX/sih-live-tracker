@@ -83,7 +83,21 @@ class SIHScraper:
         self.timeout = timeout
         self.cache_ttl = cache_ttl
         self._cached_records: List[ProblemStatement] = self.load_local_data()
-        self._last_fetch_time: float = time.time() if self._cached_records else 0.0
+        self._last_fetch_time: float = 0.0
+
+    def save_local_cache(self, records: List[ProblemStatement]):
+        """Persist fresh records to disk cache."""
+        try:
+            from pathlib import Path
+            import json
+            base = Path(__file__).resolve().parent.parent
+            cache_file = base / "data" / "cached_statements.json"
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            data = [r.to_dict() for r in records]
+            cache_file.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+            logger.info("Saved %d updated problem statements to %s", len(records), cache_file)
+        except Exception as e:
+            logger.warning("Could not persist cache to file: %s", e)
 
     def fetch_html(self) -> str:
         """Fetch raw HTML from portal with automatic retries."""
@@ -94,16 +108,17 @@ class SIHScraper:
                 response = requests.get(
                     self.url,
                     headers=self.headers,
-                    timeout=self.timeout,
+                    timeout=(10, self.timeout),
                 )
                 response.raise_for_status()
                 # Ensure correct UTF-8 decoding
                 response.encoding = "utf-8"
                 return response.text
-            except requests.exceptions.ConnectionError as e:
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
                 last_error = e
-                logger.warning("Connection error reaching SIH portal: %s", e)
-                break
+                logger.warning("Network/Connection issue reaching SIH portal (attempt %d/%d): %s", attempt, MAX_RETRIES, e)
+                if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_DELAY * attempt)
             except Exception as e:
                 last_error = e
                 logger.warning("Attempt %d failed: %s", attempt, e)
@@ -340,6 +355,7 @@ class SIHScraper:
             if parsed:
                 self._cached_records = parsed
                 self._last_fetch_time = now
+                self.save_local_cache(parsed)
             return self._cached_records
         except Exception as e:
             if self._cached_records:
