@@ -3,86 +3,149 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SIH Live Submission Tracker & Problem Statements</title>
+  <title>SIH Live Tracker & Problem Statements | Next-Gen Intelligence</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
 
 <div class="container">
-  <!-- Top Header -->
+  <!-- Top Header & Navigation -->
   <header>
     <div class="brand-section">
-      <div class="brand-icon">⚡</div>
+      <div class="brand-icon-wrapper">
+        <span>⚡</span>
+      </div>
       <div class="brand-title">
         <h1>SIH Live Tracker</h1>
         <p>Real-time submission monitoring & competition analytics</p>
       </div>
     </div>
-    <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
-      <div class="live-indicator-pill" id="livePill">
-        <div class="pulse-dot"></div>
-        <span id="liveStatusText">Live Monitoring Active</span>
+    
+    <div class="header-actions">
+      <div class="live-pill" id="livePill">
+        <div class="pulse-beacon"></div>
+        <span id="liveStatusText">Live Sync Active</span>
       </div>
       <button class="btn btn-secondary" id="btnRefresh" title="Force refresh live counts from SIH">
         🔄 Fetch Live
       </button>
       <button class="btn btn-primary" id="btnImportDescriptions" title="Import and save all full descriptions from official SIH website">
-        📥 Import All Descriptions
+        📥 Import Descriptions
       </button>
+      <div class="btn-group">
+        <button class="btn btn-export" id="btnExportCSV" title="Export current list as CSV">
+          📊 Export CSV
+        </button>
+        <button class="btn btn-export" id="btnExportJSON" title="Export current list as JSON">
+          📦 Export JSON
+        </button>
+      </div>
     </div>
   </header>
 
-  <!-- Metric Highlights -->
+  <!-- Bento Command Center (KPI Metric Cards) -->
   <section class="stats-grid" id="statsGrid">
-    <div class="stat-card">
-      <div class="stat-label">Total Statements</div>
+    <div class="stat-card" style="--card-accent: #6366f1;">
+      <div class="stat-card-header">
+        <span class="stat-label">Total Statements</span>
+        <span class="stat-badge-icon">📋</span>
+      </div>
       <div class="stat-value" id="statTotalPS">-</div>
-      <div class="stat-sub" id="statCategoryBreakdown">Software / Hardware</div>
+      <div class="stat-sub" id="statCategoryBreakdown">
+        <span>Software / Hardware</span>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Total Submissions</div>
+
+    <div class="stat-card" style="--card-accent: #06b6d4;">
+      <div class="stat-card-header">
+        <span class="stat-label">Live Submissions</span>
+        <span class="stat-badge-icon">🚀</span>
+      </div>
       <div class="stat-value" id="statTotalSubs">-</div>
-      <div class="stat-sub">Live registered ideas</div>
+      <div class="stat-sub">Live registered ideas across India</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Average Competition</div>
+
+    <div class="stat-card" style="--card-accent: #10b981;">
+      <div class="stat-card-header">
+        <span class="stat-label">Average Competition</span>
+        <span class="stat-badge-icon">🎯</span>
+      </div>
       <div class="stat-value" id="statAvgSubs">-</div>
-      <div class="stat-sub">Ideas per statement</div>
+      <div class="stat-sub">Ideas per problem statement</div>
     </div>
-    <div class="stat-card">
-      <div class="stat-label">Frozen (At Cap)</div>
+
+    <div class="stat-card" style="--card-accent: #f43f5e;">
+      <div class="stat-card-header">
+        <span class="stat-label">Frozen (At Cap)</span>
+        <span class="stat-badge-icon">🔒</span>
+      </div>
       <div class="stat-value" id="statFrozen">-</div>
-      <div class="stat-sub">Statements at 500/500 cap</div>
+      <div class="stat-sub">Locked at maximum 500/500 ideas</div>
     </div>
   </section>
 
-  <!-- Control & Filter Bar -->
+  <!-- Filter & Search Command Panel -->
   <section class="controls-panel">
-    <!-- Search and Dropdowns Row -->
-    <div class="search-row">
-      <div class="search-input-wrapper">
+    <!-- Segmented Quick-Filter Tabs & View Mode Switcher -->
+    <div class="filter-tabs-row">
+      <div class="segmented-tabs" id="segmentedTabs">
+        <button type="button" class="tab-btn active" data-tab="all">
+          All Statements
+        </button>
+        <button type="button" class="tab-btn" data-tab="software">
+          💻 Software
+        </button>
+        <button type="button" class="tab-btn" data-tab="hardware">
+          ⚡ Hardware
+        </button>
+        <button type="button" class="tab-btn" data-tab="watchlist">
+          ⭐ Starred <span class="tab-badge" id="tabWatchCount">0</span>
+        </button>
+        <button type="button" class="tab-btn" data-tab="best-odds">
+          🎯 Best Odds (&lt;30)
+        </button>
+      </div>
+
+      <!-- Layout Toggle: Grid vs Table -->
+      <div class="view-mode-toggle">
+        <button type="button" class="view-btn-toggle active" id="btnViewGrid" title="Card Grid View">
+          <span>🔲</span> Cards
+        </button>
+        <button type="button" class="view-btn-toggle" id="btnViewTable" title="Compact Table View">
+          <span>📑</span> Compact Table
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Search & Dropdowns Row -->
+    <div class="search-filter-row">
+      <div class="search-wrapper">
+        <span class="search-icon-inside">🔍</span>
         <input 
           type="text" 
           id="searchInput" 
           class="search-input" 
-          placeholder="🔍 Search by keyword, title, description, or ID (e.g. AI, Drone, 26001)..."
+          placeholder="Search by keyword, title, PS ID (e.g. AI, Drone, 26001)..."
+          autocomplete="off"
         >
+        <span class="search-shortcut-badge" title="Press / key anywhere to search">/</span>
       </div>
-      <div class="filter-group">
-        <select id="categoryFilter" class="filter-select">
+
+      <div class="dropdown-cluster">
+        <select id="categoryFilter" class="custom-select">
           <option value="">All Categories</option>
           <option value="Software">Software</option>
           <option value="Hardware">Hardware</option>
         </select>
-        
+
         <!-- Multi-Select Theme Dropdown Component -->
         <div class="theme-multiselect-container" id="themeMultiContainer">
           <button type="button" class="theme-multiselect-trigger" id="themeTrigger" aria-expanded="false" aria-haspopup="true">
             <span class="theme-trigger-content">
-              <span class="theme-icon">🏷️</span>
+              <span>🏷️</span>
               <span class="theme-trigger-label" id="themeTriggerLabel">All Themes / Domains</span>
             </span>
             <span class="theme-trigger-badges">
@@ -95,35 +158,31 @@
           <!-- Dropdown Popover Menu -->
           <div class="theme-dropdown-menu" id="themeDropdownMenu">
             <div class="theme-menu-header">
-              <div class="theme-search-box">
-                <input 
-                  type="text" 
-                  id="themeSearchInput" 
-                  class="theme-search-input" 
-                  placeholder="🔍 Search themes..." 
-                  autocomplete="off"
-                >
-              </div>
+              <input 
+                type="text" 
+                id="themeSearchInput" 
+                class="theme-search-input" 
+                placeholder="🔍 Filter themes..." 
+                autocomplete="off"
+              >
               <div class="theme-quick-actions">
                 <button type="button" class="theme-action-btn" id="btnSelectAllThemes">Select All</button>
                 <button type="button" class="theme-action-btn" id="btnClearAllThemes">Clear</button>
               </div>
             </div>
 
-            <!-- Theme Checkboxes List -->
             <div class="theme-options-list" id="themeOptionsList">
               <!-- Dynamically populated -->
             </div>
 
-            <!-- Footer summary -->
             <div class="theme-menu-footer">
               <span id="themeSelectionSummary">0 selected</span>
-              <button type="button" class="btn btn-primary btn-sm" id="btnApplyThemes" style="padding: 4px 12px; font-size: 0.78rem;">Done</button>
+              <button type="button" class="btn btn-primary btn-sm" id="btnApplyThemes">Done</button>
             </div>
           </div>
         </div>
 
-        <select id="sortFilter" class="filter-select">
+        <select id="sortFilter" class="custom-select">
           <option value="id">Sort: Default ID</option>
           <option value="sub-asc">Submissions: Lowest First (Best Odds)</option>
           <option value="sub-desc">Submissions: Highest First</option>
@@ -139,77 +198,104 @@
       <button type="button" class="active-themes-clear-all" id="btnClearAllThemesChip">Clear All Themes</button>
     </div>
 
-    <!-- NEW: Submission Range Filter Row (15-59) -->
+    <!-- Submissions Range & Odds Presets Row -->
     <div class="range-filter-wrapper">
       <div class="range-label">🎯 Submissions Range:</div>
       <div class="range-inputs">
         <input type="number" id="rangeMin" class="range-input" placeholder="Min (15)" min="0" max="500">
         <span style="color: var(--text-dim); font-size: 0.85rem;">to</span>
         <input type="number" id="rangeMax" class="range-input" placeholder="Max (59)" min="0" max="500">
-        <button class="btn btn-primary btn-sm" id="btnApplyRange">Search Range</button>
-        <button class="btn btn-secondary btn-sm" id="btnResetRange">Clear</button>
+        <button class="btn btn-primary btn-sm" id="btnApplyRange">Apply</button>
+        <button class="btn btn-secondary btn-sm" id="btnResetRange">Reset</button>
       </div>
       <div class="range-presets">
-        <span style="font-size: 0.76rem; color: var(--text-dim); margin-left: 6px;">Presets:</span>
-        <span class="preset-pill" onclick="applyPreset(15, 59)">15 - 59</span>
-        <span class="preset-pill" onclick="applyPreset(0, 15)">&lt; 15 (Lowest)</span>
+        <span style="font-size: 0.76rem; color: var(--text-dim); margin-left: 4px;">Presets:</span>
+        <span class="preset-pill" onclick="applyPreset(15, 59)">15 - 59 (Sweet Spot)</span>
+        <span class="preset-pill" onclick="applyPreset(0, 15)">&lt; 15 (Lowest Competition)</span>
         <span class="preset-pill" onclick="applyPreset(20, 50)">20 - 50</span>
         <span class="preset-pill" onclick="applyPreset(50, 100)">50 - 100</span>
         <span class="preset-pill" onclick="applyPreset(100, 500)">100+</span>
       </div>
     </div>
 
-    <!-- Quick Selected PS Bar -->
-    <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
-      <span style="font-size: 0.85rem; color: var(--text-muted);">Quick Add PS ID to Track:</span>
+    <!-- Quick Selected PS Watchlist Bar -->
+    <div class="quick-watch-bar">
+      <span style="font-size: 0.82rem; color: var(--text-muted); font-weight: 600;">⚡ Quick Add PS ID:</span>
       <input 
         type="text" 
         id="quickAddInput" 
+        class="quick-watch-input"
         placeholder="e.g. SIH26001, SIH26005" 
-        style="padding: 6px 12px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-color); border-radius: var(--radius-sm); color: #fff; font-size: 0.85rem;"
       >
-      <button class="btn btn-secondary" id="btnAddWatch" style="padding: 6px 12px; font-size: 0.8rem;">+ Add to Watchlist</button>
-      <button class="btn btn-primary" id="btnFilterWatchlist" style="padding: 6px 12px; font-size: 0.8rem;">Filter Watchlist Only</button>
-      <button class="btn btn-secondary" id="btnClearWatchlist" style="padding: 6px 12px; font-size: 0.8rem;">Clear Watchlist</button>
+      <button class="btn btn-secondary btn-sm" id="btnAddWatch">+ Add to Starred</button>
+      <button class="btn btn-primary btn-sm" id="btnFilterWatchlist">Show Starred Only</button>
+      <button class="btn btn-secondary btn-sm" id="btnClearWatchlist">Clear All Starred</button>
     </div>
 
+    <!-- Result Count Row -->
     <div class="action-row">
-      <div style="font-size: 0.88rem; color: var(--text-muted);" id="resultCount">
-        Showing 0 problem statement(s)
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-secondary" id="btnExportCSV">📥 Export CSV</button>
-        <button class="btn btn-secondary" id="btnExportJSON">📥 Export JSON</button>
+      <div class="result-count-label" id="resultCount">
+        Showing <span class="result-count-number">0</span> problem statement(s)
       </div>
     </div>
   </section>
 
   <!-- Active Watchlist Banner -->
-  <div class="watchlist-bar" id="watchlistBar" style="display: none;">
-    <div style="font-size: 0.85rem; font-weight: 600;">📌 Your Watchlist:</div>
+  <div class="watchlist-banner" id="watchlistBar" style="display: none;">
+    <div style="font-size: 0.85rem; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 6px;">
+      <span>⭐</span> Starred Watchlist (<span id="watchlistCountSpan">0</span>):
+    </div>
     <div class="watchlist-tags" id="watchlistTags"></div>
   </div>
 
-  <!-- Cards Grid -->
+  <!-- Cards Grid View Mode -->
   <main class="statements-grid" id="cardsGrid">
-    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: var(--text-muted);">
-      Loading live problem statements from SIH portal...
-    </div>
+    <div class="shimmer-card"></div>
+    <div class="shimmer-card"></div>
+    <div class="shimmer-card"></div>
   </main>
+
+  <!-- Compact Table View Mode (Hidden by default) -->
+  <div class="table-view-container" id="tableViewContainer">
+    <table class="compact-table">
+      <thead>
+        <tr>
+          <th style="width: 40px;">⭐</th>
+          <th>PS ID</th>
+          <th>Title & Organization</th>
+          <th>Category</th>
+          <th>Theme</th>
+          <th style="width: 140px;">Live Ideas</th>
+          <th>Win Odds</th>
+          <th style="text-align: right;">Action</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody">
+        <!-- Dynamically populated -->
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Modal for Full Statement Details -->
 <div class="modal-overlay" id="detailModal">
   <div class="modal-box">
-    <button class="modal-close" id="modalClose">&times;</button>
-    <div style="display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap;">
-      <span class="ps-id-badge" id="mId"></span>
+    <button class="modal-close" id="modalClose" title="Close (Esc)">&times;</button>
+    
+    <div style="display: flex; gap: 10px; margin-bottom: 12px; align-items: center; flex-wrap: wrap;">
+      <span class="ps-id-badge" id="mId" title="Click to copy ID" onclick="copyPsId(this.textContent)"></span>
       <span class="category-tag cat-software" id="mCat"></span>
-      <button id="mWatchlistBtn" class="btn-watchlist-card" style="margin-left: auto;">+ Add to Watchlist</button>
+      <span id="mOddsBadge" class="odds-badge"></span>
+      <button id="mWatchlistBtn" class="btn btn-secondary btn-sm" style="margin-left: auto;">
+        ⭐ Add to Starred
+      </button>
     </div>
-    <h2 id="mTitle" style="font-size: 1.35rem; margin-bottom: 12px; line-height: 1.4;"></h2>
-    <div style="font-size: 0.85rem; color: var(--text-dim); margin-bottom: 16px;">
-      <strong>Organization:</strong> <span id="mOrg"></span> | <strong>Department:</strong> <span id="mDept"></span>
+
+    <h2 id="mTitle" style="font-size: 1.35rem; margin-bottom: 12px; line-height: 1.4; color: #fff; font-weight: 700;"></h2>
+    
+    <div style="font-size: 0.84rem; color: var(--text-dim); margin-bottom: 18px;">
+      <strong>Organization:</strong> <span id="mOrg" style="color: #cbd5e1;"></span> &bull; 
+      <strong>Department:</strong> <span id="mDept" style="color: #cbd5e1;"></span>
     </div>
 
     <div class="submission-meter" style="margin-bottom: 20px;">
@@ -226,17 +312,24 @@
       </div>
     </div>
 
-    <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--primary-light);">Full Problem Statement Description:</h4>
+    <h4 style="font-size: 0.95rem; margin-bottom: 8px; color: var(--primary-light); font-weight: 700;">
+      📖 Full Problem Statement Description:
+    </h4>
     <div class="modal-desc-box" id="mDesc">No description available.</div>
 
     <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;" id="mLinks"></div>
   </div>
 </div>
 
+<!-- Floating Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
 <script>
   let allStatements = [];
   let displayedStatements = [];
   let watchlist = JSON.parse(localStorage.getItem('sih_watchlist') || '[]');
+  let currentViewMode = localStorage.getItem('sih_view_mode') || 'grid';
+  let activeTab = 'all';
   let autoRefreshInterval = null;
 
   // Multi-theme selection state
@@ -262,6 +355,63 @@
       .replace(/"/g, '\\"');
   }
 
+  // Toast Notification Trigger
+  function showToast(message, icon = '✨') {
+    const container = document.getElementById('toastContainer');
+    const toast = document.createElement('div');
+    toast.className = 'toast';
+    toast.innerHTML = `<span>${icon}</span><span>${escapeHtml(message)}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      if (toast.parentNode) toast.parentNode.removeChild(toast);
+    }, 3000);
+  }
+
+  // 1-Click Copy PS ID
+  window.copyPsId = function(id) {
+    if (!id) return;
+    const clean = id.trim();
+    navigator.clipboard.writeText(clean).then(() => {
+      showToast(`Copied ${clean} to clipboard!`, '📋');
+    }).catch(() => {
+      showToast(`Copied ${clean}`, '📋');
+    });
+  };
+
+  // Hackathon Win-Odds Badge Helper
+  function getOddsInfo(submittedCount, capacity = 500) {
+    if (submittedCount >= capacity) {
+      return { label: '🔒 Cap Reached', className: 'odds-frozen' };
+    }
+    if (submittedCount < 20) {
+      return { label: '🟢 High Win Chance', className: 'odds-high-win' };
+    }
+    if (submittedCount <= 60) {
+      return { label: '🎯 Sweet Spot', className: 'odds-sweet-spot' };
+    }
+    if (submittedCount <= 150) {
+      return { label: '🟡 Moderate Heat', className: 'odds-moderate' };
+    }
+    return { label: '🔥 Fierce Heat', className: 'odds-fierce' };
+  }
+
+  function getFillClass(pct) {
+    if (pct >= 80) return 'fill-critical';
+    if (pct >= 50) return 'fill-high';
+    if (pct >= 20) return 'fill-moderate';
+    return 'fill-low';
+  }
+
+  function formatDescriptionHtml(desc) {
+    if (!desc) return 'No description provided.';
+    let clean = desc
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+    clean = clean.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #c7d2fe; display: block; margin-top: 10px; font-size: 0.92rem;">$1</strong>');
+    return clean;
+  }
+
   async function fetchSummary() {
     try {
       const res = await fetch('/api/summary');
@@ -270,8 +420,8 @@
       document.getElementById('statTotalSubs').textContent = (data.total_live_submissions || 0).toLocaleString();
       document.getElementById('statAvgSubs').textContent = data.average_submissions || '-';
       document.getElementById('statFrozen').textContent = data.frozen_statements_count || '0';
-      document.getElementById('statCategoryBreakdown').textContent = 
-        `${data.software_count || 0} Software • ${data.hardware_count || 0} Hardware`;
+      document.getElementById('statCategoryBreakdown').innerHTML = 
+        `<span>${data.software_count || 0} Software &bull; ${data.hardware_count || 0} Hardware</span>`;
     } catch (e) {
       console.error('Error fetching summary:', e);
     }
@@ -334,7 +484,6 @@
   function onThemesChanged() {
     updateThemeTriggerLabel();
     renderActiveThemeChips();
-    // Synchronize checkboxes in current view
     const rows = document.querySelectorAll('.theme-option-row');
     rows.forEach(row => {
       const cb = row.querySelector('.theme-checkbox');
@@ -359,8 +508,7 @@
       pill.style.display = 'none';
       clearBtn.style.display = 'none';
     } else if (selectedThemes.size === 1) {
-      const single = Array.from(selectedThemes)[0];
-      label.textContent = single;
+      label.textContent = Array.from(selectedThemes)[0];
       pill.textContent = '1';
       pill.style.display = 'inline-flex';
       clearBtn.style.display = 'inline-flex';
@@ -402,16 +550,25 @@
 
   async function fetchStatements(forceRefresh = false) {
     const grid = document.getElementById('cardsGrid');
+    const tableBody = document.getElementById('tableBody');
     if (forceRefresh) {
-      document.getElementById('liveStatusText').textContent = 'Refreshing Live...';
+      document.getElementById('liveStatusText').textContent = 'Syncing Live SIH...';
     }
 
     try {
-      const cat = document.getElementById('categoryFilter').value;
+      let cat = document.getElementById('categoryFilter').value;
+      if (activeTab === 'software') cat = 'Software';
+      if (activeTab === 'hardware') cat = 'Hardware';
+
       const kw = document.getElementById('searchInput').value;
       const sort = document.getElementById('sortFilter').value;
-      const minSub = document.getElementById('rangeMin').value;
-      const maxSub = document.getElementById('rangeMax').value;
+      let minSub = document.getElementById('rangeMin').value;
+      let maxSub = document.getElementById('rangeMax').value;
+
+      if (activeTab === 'best-odds') {
+        minSub = '';
+        maxSub = '30';
+      }
 
       const url = new URL('/api/statements', window.location.origin);
       if (cat) url.searchParams.set('category', cat);
@@ -427,48 +584,44 @@
       const res = await fetch(url);
       const data = await res.json();
       allStatements = data.data || [];
-      renderCards(allStatements);
-      document.getElementById('liveStatusText').textContent = 'Live Monitoring Active';
+
+      let filteredList = allStatements;
+      if (activeTab === 'watchlist') {
+        filteredList = allStatements.filter(s => watchlist.includes(s.id));
+      }
+
+      renderView(filteredList);
+      document.getElementById('liveStatusText').textContent = 'Live Sync Active';
     } catch (e) {
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--danger); padding: 40px;">
+      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--accent-rose); padding: 40px;">
         Failed to fetch live data: ${e.message}
       </div>`;
+      tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-rose); padding: 30px;">Failed to fetch live data: ${e.message}</td></tr>`;
       document.getElementById('liveStatusText').textContent = 'Sync Paused';
     }
   }
 
-  function getFillClass(pct) {
-    if (pct >= 80) return 'fill-critical';
-    if (pct >= 50) return 'fill-high';
-    if (pct >= 20) return 'fill-moderate';
-    return 'fill-low';
-  }
-
-  function formatDescriptionHtml(desc) {
-    if (!desc) return 'No description provided.';
-    let clean = desc
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;");
-    // Format bold headers
-    clean = clean.replace(/\*\*(.*?)\*\*/g, '<strong style="color: #c7d2fe; display: block; margin-top: 10px; font-size: 0.92rem;">$1</strong>');
-    return clean;
-  }
-
-  function renderCards(statements) {
+  function renderView(statements) {
     displayedStatements = statements;
-    const grid = document.getElementById('cardsGrid');
-    
-    // Update count text with range info if applied
+    updateResultCount(statements.length);
+
+    if (currentViewMode === 'table') {
+      renderTable(statements);
+    } else {
+      renderCards(statements);
+    }
+  }
+
+  function updateResultCount(count) {
     const minSub = document.getElementById('rangeMin').value;
     const maxSub = document.getElementById('rangeMax').value;
     let rangeText = '';
     if (minSub !== '' && maxSub !== '') {
-      rangeText = ` with ${minSub}-${maxSub} submissions`;
+      rangeText = ` (${minSub}-${maxSub} ideas)`;
     } else if (minSub !== '') {
-      rangeText = ` with ≥${minSub} submissions`;
+      rangeText = ` (≥${minSub} ideas)`;
     } else if (maxSub !== '') {
-      rangeText = ` with ≤${maxSub} submissions`;
+      rangeText = ` (≤${maxSub} ideas)`;
     }
 
     let themeText = '';
@@ -478,12 +631,20 @@
       themeText = ` across ${selectedThemes.size} themes`;
     }
 
-    document.getElementById('resultCount').textContent = `Showing ${statements.length} problem statement(s)${rangeText}${themeText}`;
+    document.getElementById('resultCount').innerHTML = 
+      `Showing <span class="result-count-number">${count}</span> problem statement(s)${rangeText}${themeText}`;
+  }
 
+  function renderCards(statements) {
+    const grid = document.getElementById('cardsGrid');
     if (!statements.length) {
-      grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 40px;">
-        No problem statements match your current search/filters. Try clearing the range or keyword.
-      </div>`;
+      grid.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; color: var(--text-dim); padding: 60px 20px;">
+          <div style="font-size: 32px; margin-bottom: 12px;">🔍</div>
+          <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">No problem statements found</div>
+          <p style="font-size: 0.88rem;">Try clearing your keyword, range filters, or theme selection.</p>
+        </div>
+      `;
       return;
     }
 
@@ -491,34 +652,48 @@
       const isWatched = watchlist.includes(ps.id);
       const fillClass = getFillClass(ps.percentage_filled);
       const catClass = ps.category.toLowerCase() === 'hardware' ? 'cat-hardware' : 'cat-software';
+      const odds = getOddsInfo(ps.submitted_count, ps.capacity);
       const descSnippet = ps.description ? ps.description.slice(0, 160).replace(/\*\*/g, '') + '...' : 'No description available.';
 
       return `
         <div class="statement-card" data-id="${ps.id}">
           <div>
-            <!-- Card Top with Badges and ADD TO WATCHLIST button -->
+            <!-- Card Header -->
             <div class="card-top">
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <span class="ps-id-badge">${ps.id}</span>
+              <div class="card-top-left">
+                <span class="ps-id-badge" onclick="copyPsId('${ps.id}')" title="Click to copy ${ps.id}">
+                  <span>${ps.id}</span>
+                  <span class="ps-copy-icon">📋</span>
+                </span>
                 <span class="category-tag ${catClass}">${ps.category}</span>
               </div>
               <button 
-                class="btn-watchlist-card ${isWatched ? 'in-watchlist' : ''}" 
+                class="btn-star-card ${isWatched ? 'in-watchlist' : ''}" 
                 onclick="toggleWatch('${ps.id}')"
-                title="${isWatched ? 'Click to remove from watchlist' : 'Click to add to watchlist'}"
+                title="${isWatched ? 'Remove from Starred' : 'Add to Starred'}"
               >
-                ${isWatched ? '✓ In Watchlist' : '+ Add to Watchlist'}
+                ${isWatched ? '★' : '☆'}
               </button>
             </div>
 
-            <h3 class="card-title" title="${ps.title}">${ps.title}</h3>
-            <div class="card-org">🏢 ${ps.organization || 'Government Organization'}</div>
+            <!-- Title & Organization -->
+            <h3 class="card-title" title="${ps.title}" onclick="openDetails('${ps.id}')" style="cursor: pointer;">
+              ${ps.title}
+            </h3>
+            <div class="card-org" title="${ps.organization || 'Government Organization'}">
+              🏢 ${ps.organization || 'Government Organization'}
+            </div>
 
-            <!-- Live Submissions Gauge -->
+            <!-- Competition Win-Odds Badge -->
+            <div>
+              <span class="odds-badge ${odds.className}">${odds.label}</span>
+            </div>
+
+            <!-- Submission Gauge -->
             <div class="submission-meter">
               <div class="meter-header">
                 <div class="meter-count">${ps.submitted_count} <span>/ ${ps.capacity} ideas</span></div>
-                <div class="meter-status" style="color: ${ps.percentage_filled >= 80 ? 'var(--danger)' : 'var(--text-muted)'}">
+                <div class="meter-status" style="color: ${ps.percentage_filled >= 80 ? 'var(--accent-rose)' : 'var(--text-muted)'}">
                   ${ps.status}
                 </div>
               </div>
@@ -527,12 +702,12 @@
               </div>
               <div class="meter-footer">
                 <span>${ps.percentage_filled.toFixed(1)}% full</span>
-                <span>${ps.slots_remaining} slots left</span>
+                <span>${ps.slots_remaining} slots remaining</span>
               </div>
             </div>
 
-            <!-- In-Card Problem Description Drawer -->
-            <div class="card-desc-container">
+            <!-- In-Card Description Drawer -->
+            <div class="card-desc-box">
               <div class="card-desc-preview" id="descPrev-${ps.id}">
                 ${descSnippet}
               </div>
@@ -540,16 +715,92 @@
                 ${formatDescriptionHtml(ps.description)}
               </div>
               <button class="desc-toggle-btn" onclick="toggleCardDesc('${ps.id}')">
-                <span id="descToggleIcon-${ps.id}">📖 View Full Description ▾</span>
+                <span id="descToggleIcon-${ps.id}">📖 Read Description ▾</span>
               </button>
             </div>
           </div>
 
           <div class="card-footer">
             <span class="theme-pill" title="${ps.theme}">🏷️ ${ps.theme || 'General'}</span>
-            <button class="view-btn" onclick="openDetails('${ps.id}')">Full Modal Details</button>
+            <button class="view-btn" onclick="openDetails('${ps.id}')">
+              Details <span>→</span>
+            </button>
           </div>
         </div>
+      `;
+    }).join('');
+  }
+
+  function renderTable(statements) {
+    const tableBody = document.getElementById('tableBody');
+    if (!statements.length) {
+      tableBody.innerHTML = `
+        <tr>
+          <td colspan="8" style="text-align: center; color: var(--text-dim); padding: 50px 20px;">
+            No problem statements match the current filters.
+          </td>
+        </tr>
+      `;
+      return;
+    }
+
+    tableBody.innerHTML = statements.map(ps => {
+      const isWatched = watchlist.includes(ps.id);
+      const fillClass = getFillClass(ps.percentage_filled);
+      const catClass = ps.category.toLowerCase() === 'hardware' ? 'cat-hardware' : 'cat-software';
+      const odds = getOddsInfo(ps.submitted_count, ps.capacity);
+
+      return `
+        <tr>
+          <td>
+            <button 
+              class="btn-star-card ${isWatched ? 'in-watchlist' : ''}" 
+              onclick="toggleWatch('${ps.id}')"
+              style="width: 28px; height: 28px; font-size: 13px;"
+              title="${isWatched ? 'Remove from Starred' : 'Add to Starred'}"
+            >
+              ${isWatched ? '★' : '☆'}
+            </button>
+          </td>
+          <td>
+            <span class="ps-id-badge" onclick="copyPsId('${ps.id}')" title="Click to copy ${ps.id}">
+              ${ps.id}
+            </span>
+          </td>
+          <td style="max-width: 320px;">
+            <div style="font-weight: 700; color: #fff; line-height: 1.35; margin-bottom: 2px; cursor: pointer;" onclick="openDetails('${ps.id}')">
+              ${ps.title}
+            </div>
+            <div style="font-size: 0.76rem; color: var(--text-dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              🏢 ${ps.organization || 'Govt of India'}
+            </div>
+          </td>
+          <td>
+            <span class="category-tag ${catClass}">${ps.category}</span>
+          </td>
+          <td style="max-width: 180px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.8rem; color: var(--text-muted);">
+            🏷️ ${ps.theme || 'General'}
+          </td>
+          <td>
+            <div class="table-meter-box">
+              <div class="table-meter-count">
+                <span>${ps.submitted_count}</span>
+                <span style="color: var(--text-dim); font-size: 0.72rem;">/ ${ps.capacity}</span>
+              </div>
+              <div class="progress-track" style="height: 5px;">
+                <div class="progress-fill ${fillClass}" style="width: ${Math.min(100, ps.percentage_filled)}%;"></div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="odds-badge ${odds.className}" style="margin-bottom: 0;">${odds.label}</span>
+          </td>
+          <td style="text-align: right;">
+            <button class="view-btn" onclick="openDetails('${ps.id}')" style="padding: 4px 10px; font-size: 0.78rem;">
+              View →
+            </button>
+          </td>
+        </tr>
       `;
     }).join('');
   }
@@ -563,7 +814,7 @@
     if (fullEl.classList.contains('open')) {
       fullEl.classList.remove('open');
       prevEl.style.display = 'block';
-      iconEl.textContent = '📖 View Full Description ▾';
+      iconEl.textContent = '📖 Read Description ▾';
     } else {
       fullEl.classList.add('open');
       prevEl.style.display = 'none';
@@ -571,9 +822,41 @@
     }
   };
 
+  function setViewMode(mode) {
+    currentViewMode = mode;
+    localStorage.setItem('sih_view_mode', mode);
+
+    const btnGrid = document.getElementById('btnViewGrid');
+    const btnTable = document.getElementById('btnViewTable');
+    const gridEl = document.getElementById('cardsGrid');
+    const tableEl = document.getElementById('tableViewContainer');
+
+    if (mode === 'table') {
+      btnGrid.classList.remove('active');
+      btnTable.classList.add('active');
+      gridEl.style.display = 'none';
+      tableEl.classList.add('active');
+    } else {
+      btnGrid.classList.add('active');
+      btnTable.classList.remove('active');
+      gridEl.style.display = 'grid';
+      tableEl.classList.remove('active');
+    }
+    renderView(displayedStatements);
+  }
+
+  document.getElementById('btnViewGrid').addEventListener('click', () => setViewMode('grid'));
+  document.getElementById('btnViewTable').addEventListener('click', () => setViewMode('table'));
+
   function renderWatchlistBar() {
     const bar = document.getElementById('watchlistBar');
     const tags = document.getElementById('watchlistTags');
+    const countSpan = document.getElementById('watchlistCountSpan');
+    const tabCount = document.getElementById('tabWatchCount');
+
+    tabCount.textContent = String(watchlist.length);
+    countSpan.textContent = String(watchlist.length);
+
     if (!watchlist.length) {
       bar.style.display = 'none';
       return;
@@ -582,27 +865,35 @@
     tags.innerHTML = watchlist.map(id => `
       <span class="ps-chip">
         ${id}
-        <span class="chip-remove" onclick="toggleWatch('${id}')">&times;</span>
+        <span class="chip-remove" onclick="toggleWatch('${id}')" title="Remove">&times;</span>
       </span>
     `).join('');
   }
 
   window.toggleWatch = function(id) {
-    if (watchlist.includes(id)) {
+    const exists = watchlist.includes(id);
+    if (exists) {
       watchlist = watchlist.filter(x => x !== id);
+      showToast(`Removed ${id} from Starred`, '☆');
     } else {
       watchlist.push(id);
+      showToast(`Added ${id} to Starred!`, '⭐');
     }
     localStorage.setItem('sih_watchlist', JSON.stringify(watchlist));
     renderWatchlistBar();
-    renderCards(displayedStatements);
+
+    if (activeTab === 'watchlist') {
+      fetchStatements();
+    } else {
+      renderView(displayedStatements);
+    }
     
-    // Update modal button if currently viewing
+    // Update modal button if open
     const modalBtn = document.getElementById('mWatchlistBtn');
     if (modalBtn && document.getElementById('mId').textContent === id) {
       const watched = watchlist.includes(id);
-      modalBtn.className = `btn-watchlist-card ${watched ? 'in-watchlist' : ''}`;
-      modalBtn.textContent = watched ? '✓ In Watchlist' : '+ Add to Watchlist';
+      modalBtn.textContent = watched ? '★ In Starred' : '⭐ Add to Starred';
+      modalBtn.className = `btn btn-sm ${watched ? 'btn-primary' : 'btn-secondary'}`;
     }
   };
 
@@ -613,20 +904,25 @@
     document.getElementById('mId').textContent = ps.id;
     document.getElementById('mCat').textContent = ps.category;
     document.getElementById('mTitle').textContent = ps.title;
-    document.getElementById('mOrg').textContent = ps.organization;
-    document.getElementById('mDept').textContent = ps.department || ps.organization;
+    document.getElementById('mOrg').textContent = ps.organization || 'Government of India';
+    document.getElementById('mDept').textContent = ps.department || ps.organization || 'Ministry';
     document.getElementById('mMeterCount').innerHTML = `${ps.submitted_count} <span>/ ${ps.capacity} ideas</span>`;
     document.getElementById('mMeterStatus').textContent = ps.status;
     document.getElementById('mProgressBar').className = `progress-fill ${getFillClass(ps.percentage_filled)}`;
     document.getElementById('mProgressBar').style.width = `${Math.min(100, ps.percentage_filled)}%`;
-    document.getElementById('mSlotsLeft').textContent = `${ps.slots_remaining} slots remaining (${ps.percentage_filled.toFixed(1)}% filled)`;
-    document.getElementById('mDeadline').textContent = `Deadline: ${ps.deadline}`;
+    document.getElementById('mSlotsLeft').textContent = `${ps.slots_remaining} slots remaining (${ps.percentage_filled.toFixed(1)}% full)`;
+    document.getElementById('mDeadline').textContent = `Deadline: ${ps.deadline || 'SIH Official'}`;
     document.getElementById('mDesc').innerHTML = formatDescriptionHtml(ps.description);
+
+    const odds = getOddsInfo(ps.submitted_count, ps.capacity);
+    const mOdds = document.getElementById('mOddsBadge');
+    mOdds.className = `odds-badge ${odds.className}`;
+    mOdds.textContent = odds.label;
 
     const watched = watchlist.includes(ps.id);
     const modalBtn = document.getElementById('mWatchlistBtn');
-    modalBtn.className = `btn-watchlist-card ${watched ? 'in-watchlist' : ''}`;
-    modalBtn.textContent = watched ? '✓ In Watchlist' : '+ Add to Watchlist';
+    modalBtn.textContent = watched ? '★ In Starred' : '⭐ Add to Starred';
+    modalBtn.className = `btn btn-sm ${watched ? 'btn-primary' : 'btn-secondary'}`;
     modalBtn.onclick = () => toggleWatch(ps.id);
 
     const linksBox = document.getElementById('mLinks');
@@ -658,22 +954,35 @@
     fetchStatements();
   };
 
-  document.getElementById('btnApplyRange').addEventListener('click', () => {
-    fetchStatements();
-  });
-
+  document.getElementById('btnApplyRange').addEventListener('click', () => fetchStatements());
   document.getElementById('btnResetRange').addEventListener('click', () => {
     document.getElementById('rangeMin').value = '';
     document.getElementById('rangeMax').value = '';
     fetchStatements();
   });
 
-  // Allow pressing Enter in range input fields
   document.getElementById('rangeMin').addEventListener('keyup', (e) => {
     if (e.key === 'Enter') fetchStatements();
   });
   document.getElementById('rangeMax').addEventListener('keyup', (e) => {
     if (e.key === 'Enter') fetchStatements();
+  });
+
+  // Segmented Quick Filter Tabs
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      activeTab = btn.getAttribute('data-tab');
+
+      // Sync category filter dropdown
+      const catSelect = document.getElementById('categoryFilter');
+      if (activeTab === 'software') catSelect.value = 'Software';
+      else if (activeTab === 'hardware') catSelect.value = 'Hardware';
+      else catSelect.value = '';
+
+      fetchStatements();
+    });
   });
 
   // Search input debounce
@@ -685,6 +994,20 @@
 
   document.getElementById('categoryFilter').addEventListener('change', () => fetchStatements());
   document.getElementById('sortFilter').addEventListener('change', () => fetchStatements());
+
+  // Global Keyboard Shortcuts
+  document.addEventListener('keydown', (e) => {
+    // Focus search on '/'
+    if (e.key === '/' && document.activeElement.tagName !== 'INPUT' && document.activeElement.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      document.getElementById('searchInput').focus();
+    }
+    // Close modal or dropdown on Escape
+    if (e.key === 'Escape') {
+      document.getElementById('detailModal').classList.remove('active');
+      toggleThemeDropdown(false);
+    }
+  });
 
   // Multi-Select Theme Dropdown events
   const themeTrigger = document.getElementById('themeTrigger');
@@ -718,13 +1041,8 @@
     clearAllThemes();
   });
 
-  document.getElementById('btnClearAllThemesChip').addEventListener('click', () => {
-    clearAllThemes();
-  });
-
-  document.getElementById('btnApplyThemes').addEventListener('click', () => {
-    toggleThemeDropdown(false);
-  });
+  document.getElementById('btnClearAllThemesChip').addEventListener('click', () => clearAllThemes());
+  document.getElementById('btnApplyThemes').addEventListener('click', () => toggleThemeDropdown(false));
 
   themeSearchInput.addEventListener('input', (e) => {
     renderThemeOptions(e.target.value);
@@ -737,11 +1055,8 @@
     onThemesChanged();
   });
 
-  document.getElementById('btnClearAllThemes').addEventListener('click', () => {
-    clearAllThemes();
-  });
+  document.getElementById('btnClearAllThemes').addEventListener('click', () => clearAllThemes());
 
-  // Close dropdown when clicking outside
   document.addEventListener('click', (e) => {
     const container = document.getElementById('themeMultiContainer');
     if (container && !container.contains(e.target)) {
@@ -749,29 +1064,25 @@
     }
   });
 
-  // Close dropdown on Escape
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      toggleThemeDropdown(false);
-    }
-  });
   document.getElementById('btnRefresh').addEventListener('click', () => {
     fetchSummary();
     fetchStatements(true);
+    showToast('Fetching latest SIH live counts...', '🔄');
   });
 
   // Import All Descriptions Button
   document.getElementById('btnImportDescriptions').addEventListener('click', async () => {
     const btn = document.getElementById('btnImportDescriptions');
     const originalText = btn.textContent;
-    btn.textContent = '⏳ Importing from SIH...';
+    btn.textContent = '⏳ Importing...';
     btn.disabled = true;
 
     try {
+      showToast('Downloading all descriptions from SIH portal...', '⏳');
       const res = await fetch('/api/import-all-descriptions', { method: 'POST' });
       const data = await res.json();
-      alert(`✅ ${data.message}\n\nAll Markdown files saved to: ${data.directory}`);
-      // Also download full JSON export with all descriptions
+      showToast(`Imported ${data.count} descriptions to Markdown!`, '✅');
+      
       const blob = new Blob([JSON.stringify(allStatements, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -779,47 +1090,65 @@
       a.download = `sih_all_descriptions_complete.json`;
       a.click();
     } catch (e) {
-      alert('Error importing descriptions: ' + e.message);
+      showToast('Error importing descriptions: ' + e.message, '❌');
     } finally {
       btn.textContent = originalText;
       btn.disabled = false;
     }
   });
 
-  // Watchlist buttons
+  // Watchlist Quick-Add Buttons
   document.getElementById('btnAddWatch').addEventListener('click', () => {
     const input = document.getElementById('quickAddInput').value.trim();
     if (!input) return;
     const ids = input.split(',').map(s => s.trim().toUpperCase());
+    let addedCount = 0;
     ids.forEach(id => {
       const formatted = id.startsWith('SIH') ? id : 'SIH' + id;
-      if (!watchlist.includes(formatted)) watchlist.push(formatted);
+      if (!watchlist.includes(formatted)) {
+        watchlist.push(formatted);
+        addedCount++;
+      }
     });
     localStorage.setItem('sih_watchlist', JSON.stringify(watchlist));
     document.getElementById('quickAddInput').value = '';
     renderWatchlistBar();
-    renderCards(displayedStatements);
+    renderView(displayedStatements);
+    showToast(`Added ${addedCount} statement(s) to Starred!`, '⭐');
   });
 
   document.getElementById('btnFilterWatchlist').addEventListener('click', () => {
     if (!watchlist.length) {
-      alert('Your watchlist is empty! Add problem statements first.');
+      showToast('Your Starred list is empty! Star some statements first.', '⚠️');
       return;
     }
-    const filtered = allStatements.filter(s => watchlist.includes(s.id));
-    renderCards(filtered);
+    // Switch tab to watchlist
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    const watchTab = document.querySelector('.tab-btn[data-tab="watchlist"]');
+    if (watchTab) watchTab.classList.add('active');
+    activeTab = 'watchlist';
+    fetchStatements();
   });
 
   document.getElementById('btnClearWatchlist').addEventListener('click', () => {
+    if (!watchlist.length) return;
     watchlist = [];
     localStorage.removeItem('sih_watchlist');
     renderWatchlistBar();
-    renderCards(displayedStatements);
+    showToast('Cleared all Starred problem statements', '🗑️');
+    if (activeTab === 'watchlist') {
+      fetchStatements();
+    } else {
+      renderView(displayedStatements);
+    }
   });
 
-  // Export handlers
+  // Export Handlers
   document.getElementById('btnExportCSV').addEventListener('click', () => {
-    if (!displayedStatements.length) return;
+    if (!displayedStatements.length) {
+      showToast('No statements available to export', '⚠️');
+      return;
+    }
     const headers = ["id", "title", "category", "theme", "organization", "submitted_count", "capacity", "percentage_filled", "deadline", "description"];
     const csvRows = [headers.join(',')];
     displayedStatements.forEach(s => {
@@ -841,21 +1170,26 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sih_problem_statements_${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `sih_live_statements_${new Date().toISOString().slice(0,10)}.csv`;
     a.click();
+    showToast('Exported CSV file successfully!', '📊');
   });
 
   document.getElementById('btnExportJSON').addEventListener('click', () => {
-    if (!displayedStatements.length) return;
+    if (!displayedStatements.length) {
+      showToast('No statements available to export', '⚠️');
+      return;
+    }
     const blob = new Blob([JSON.stringify(displayedStatements, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `sih_problem_statements_${new Date().toISOString().slice(0,10)}.json`;
+    a.download = `sih_live_statements_${new Date().toISOString().slice(0,10)}.json`;
     a.click();
+    showToast('Exported JSON file successfully!', '📦');
   });
 
-  // Auto-refresh every 30 seconds
+  // Setup auto-refresh every 30s
   function setupAutoRefresh() {
     autoRefreshInterval = setInterval(() => {
       fetchSummary();
@@ -863,7 +1197,8 @@
     }, 30000);
   }
 
-  // Init
+  // Initialize
+  setViewMode(currentViewMode);
   fetchSummary();
   fetchThemes();
   fetchStatements();
