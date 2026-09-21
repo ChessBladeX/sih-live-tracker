@@ -179,7 +179,7 @@ def get_summary(refresh: bool = Query(False)):
 def get_meta():
     """Fetch distinct categories, themes, and theme counts for dropdown filters."""
     from collections import Counter
-    all_ps = scraper.fetch_all()
+    all_ps = scraper.fetch_all(force_refresh=True)
     theme_counts = Counter(ps.theme for ps in all_ps if ps.theme)
     themes = sorted(theme_counts.keys())
     categories = sorted({ps.category for ps in all_ps if ps.category})

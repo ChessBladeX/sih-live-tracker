@@ -1070,7 +1070,7 @@
   });
 
   document.getElementById('btnRefresh').addEventListener('click', () => {
-    fetchSummary();
+    fetchSummary(true);
     fetchStatements(true);
     showToast('Fetching latest SIH live counts...', '🔄');
   });
@@ -1197,7 +1197,7 @@
   // Setup auto-refresh every 30s
   function setupAutoRefresh() {
     autoRefreshInterval = setInterval(() => {
-      fetchSummary();
+      fetchSummary(true);
       fetchStatements(true);
     }, 30000);
   }

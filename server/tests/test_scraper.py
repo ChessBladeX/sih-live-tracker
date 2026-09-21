@@ -4,6 +4,7 @@ import sys
 import unittest
 from pathlib import Path
 import tempfile
+from unittest.mock import patch
 
 # Ensure server package directory is in sys.path
 SERVER_DIR = Path(__file__).resolve().parent.parent
@@ -117,6 +118,53 @@ class TestSIHScraper(unittest.TestCase):
         self.assertEqual(item.slots_remaining, 475)
         self.assertEqual(item.department, "Smart Cities Division")
         self.assertEqual(item.description, "Smart camera feed analyzer")
+
+    def test_fetch_all_uses_live_records_when_available(self):
+        scraper = SIHScraper()
+        live_record = ProblemStatement(
+            id="SIH26099",
+            numeric_id="26099",
+            sno=1,
+            title="Live Statement",
+            organization="Live Org",
+            department="Live Dept",
+            category="Software",
+            theme="Live Theme",
+            submitted_count=321,
+            capacity=500,
+            deadline="30 September 2026",
+        )
+
+        with patch.object(scraper, "fetch_html", return_value="live html"), \
+                patch.object(scraper, "parse_html", return_value=[live_record]), \
+                patch.object(scraper, "save_local_cache"):
+            records = scraper.fetch_all(force_refresh=True)
+
+        self.assertEqual(records, [live_record])
+        self.assertEqual(records[0].submitted_count, 321)
+
+    def test_empty_live_response_does_not_replace_last_known_records(self):
+        scraper = SIHScraper()
+        known_record = ProblemStatement(
+            id="SIH26001",
+            numeric_id="26001",
+            sno=1,
+            title="Known Statement",
+            organization="Org",
+            department="Dept",
+            category="Software",
+            theme="Theme",
+            submitted_count=12,
+            capacity=500,
+            deadline="30 September 2026",
+        )
+        scraper._cached_records = [known_record]
+
+        with patch.object(scraper, "fetch_html", return_value="empty html"), \
+                patch.object(scraper, "parse_html", return_value=[]):
+            records = scraper.fetch_all(force_refresh=True)
+
+        self.assertEqual(records, [known_record])
 
     def test_export_csv_and_json(self):
         ps = ProblemStatement(

@@ -344,7 +344,7 @@ class SIHScraper:
         return self.load_from_descriptions_dir()
 
     def fetch_all(self, force_refresh: bool = False) -> List[ProblemStatement]:
-        """Fetch all problem statements, utilizing cache unless forced."""
+        """Fetch all problem statements, using local data only as an offline fallback."""
         now = time.time()
         if not force_refresh and self._cached_records and (now - self._last_fetch_time < self.cache_ttl):
             return self._cached_records
@@ -352,14 +352,15 @@ class SIHScraper:
         try:
             html = self.fetch_html()
             parsed = self.parse_html(html)
-            if parsed:
-                self._cached_records = parsed
-                self._last_fetch_time = now
-                self.save_local_cache(parsed)
+            if not parsed:
+                raise ValueError("The SIH portal returned no problem statements.")
+            self._cached_records = parsed
+            self._last_fetch_time = now
+            self.save_local_cache(parsed)
             return self._cached_records
         except Exception as e:
             if self._cached_records:
-                logger.warning("SIH portal fetch error (%s); serving cached statements", e)
+                logger.warning("SIH portal fetch error (%s); serving last known statements", e)
                 return self._cached_records
             fallback = self.load_local_data()
             if fallback:
