@@ -416,7 +416,8 @@
     try {
       const url = new URL('/api/summary', window.location.origin);
       if (forceRefresh) url.searchParams.set('refresh', 'true');
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Summary request failed (${res.status})`);
       const data = await res.json();
       document.getElementById('statTotalPS').textContent = data.total_problem_statements || '-';
       document.getElementById('statTotalSubs').textContent = (data.total_live_submissions || 0).toLocaleString();
@@ -426,6 +427,7 @@
         `<span>${data.software_count || 0} Software &bull; ${data.hardware_count || 0} Hardware</span>`;
     } catch (e) {
       console.error('Error fetching summary:', e);
+      throw e;
     }
   }
 
@@ -583,7 +585,8 @@
       if (maxSub !== '') url.searchParams.set('max_submissions', maxSub);
       if (forceRefresh) url.searchParams.set('refresh', 'true');
 
-      const res = await fetch(url);
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Statements request failed (${res.status})`);
       const data = await res.json();
       allStatements = data.data || [];
 
@@ -603,6 +606,7 @@
       </div>`;
       tableBody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--accent-rose); padding: 30px;">Failed to fetch live data: ${e.message}</td></tr>`;
       document.getElementById('liveStatusText').textContent = 'Sync Paused';
+      if (forceRefresh) throw e;
     }
   }
 
@@ -1070,9 +1074,7 @@
   });
 
   document.getElementById('btnRefresh').addEventListener('click', () => {
-    fetchSummary(true);
-    fetchStatements(true);
-    showToast('Fetching latest SIH live counts...', '🔄');
+    refreshLiveData(true);
   });
 
   // Import All Descriptions Button
@@ -1194,11 +1196,27 @@
     showToast('Exported JSON file successfully!', '📦');
   });
 
-  // Setup auto-refresh every 30s
+  // Refresh statements before the summary so both views use the same scrape.
+  async function refreshLiveData(showNotification = false) {
+    if (showNotification) {
+      document.getElementById('liveStatusText').textContent = 'Syncing Live SIH...';
+      showToast('Fetching latest SIH live counts...', '🔄');
+    }
+
+    try {
+      await fetchStatements(true);
+      await fetchSummary(false);
+      document.getElementById('liveStatusText').textContent = 'Live Sync Active';
+    } catch (e) {
+      document.getElementById('liveStatusText').textContent = 'Sync Paused';
+      console.error('Live refresh failed:', e);
+    }
+  }
+
+  // Keep live submission counts current while the dashboard is open.
   function setupAutoRefresh() {
     autoRefreshInterval = setInterval(() => {
-      fetchSummary(true);
-      fetchStatements(true);
+      refreshLiveData();
     }, 30000);
   }
 

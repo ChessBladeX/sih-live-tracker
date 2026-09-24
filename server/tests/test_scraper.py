@@ -143,7 +143,7 @@ class TestSIHScraper(unittest.TestCase):
         self.assertEqual(records, [live_record])
         self.assertEqual(records[0].submitted_count, 321)
 
-    def test_empty_live_response_does_not_replace_last_known_records(self):
+    def test_empty_live_response_fails_forced_refresh_instead_of_using_stale_data(self):
         scraper = SIHScraper()
         known_record = ProblemStatement(
             id="SIH26001",
@@ -162,9 +162,10 @@ class TestSIHScraper(unittest.TestCase):
 
         with patch.object(scraper, "fetch_html", return_value="empty html"), \
                 patch.object(scraper, "parse_html", return_value=[]):
-            records = scraper.fetch_all(force_refresh=True)
+            with self.assertRaisesRegex(RuntimeError, "Live SIH refresh failed"):
+                scraper.fetch_all(force_refresh=True)
 
-        self.assertEqual(records, [known_record])
+        self.assertEqual(scraper._cached_records, [known_record])
 
     def test_export_csv_and_json(self):
         ps = ProblemStatement(

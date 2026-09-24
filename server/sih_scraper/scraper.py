@@ -359,6 +359,8 @@ class SIHScraper:
             self.save_local_cache(parsed)
             return self._cached_records
         except Exception as e:
+            if force_refresh:
+                raise RuntimeError(f"Live SIH refresh failed: {e}") from e
             if self._cached_records:
                 logger.warning("SIH portal fetch error (%s); serving last known statements", e)
                 return self._cached_records

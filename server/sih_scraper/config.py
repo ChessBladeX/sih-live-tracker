@@ -20,6 +20,8 @@ DEFAULT_HEADERS = {
     "Sec-Fetch-User": "?1",
     "Upgrade-Insecure-Requests": "1",
     "Connection": "keep-alive",
+    "Cache-Control": "no-cache, no-store, max-age=0",
+    "Pragma": "no-cache",
 }
 
 DEFAULT_TIMEOUT = 25  # seconds
